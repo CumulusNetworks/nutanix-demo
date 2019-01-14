@@ -991,7 +991,8 @@ class WorkQueue:
                             log_info("VM %s added" % vm_name)
                             if bond_name:
                                 vlanDBLock.acquire()
-                                AddVlanConfig(nlm, bond_name, vlanId)
+                                if vlanId:
+                                    AddVlanConfig(nlm, bond_name, vlanId)
                                 vlanDBLock.release()
                                 AddStaticMac(nlm, mac, bond_name, vlanId)
                             else:
@@ -1004,12 +1005,14 @@ class WorkQueue:
                             if vm[0]:
                                 DelStaticMac(nlm, vm[4], vm[0], vm[1])
                                 vlanDBLock.acquire()
-                                DelVlanConfig(nlm, vm[0], vm[1])
+                                if vm[1]:
+                                    DelVlanConfig(nlm, vm[0], vm[1])
                                 vlanDBLock.release()
                             vmDB[vm_uuid] = [bond_name, vlanId, host_name, vm_name, mac]
                             if bond_name:
                                 vlanDBLock.acquire()
-                                AddVlanConfig(nlm, bond_name, vlanId)
+                                if vlanId:
+                                    AddVlanConfig(nlm, bond_name, vlanId)
                                 vlanDBLock.release()
                                 AddStaticMac(nlm, mac, bond_name, vlanId)
                             else:
@@ -1024,7 +1027,8 @@ class WorkQueue:
                     if vm[0]:
                         DelStaticMac(nlm, vm[4], vm[0], vm[1])
                         vlanDBLock.acquire()
-                        DelVlanConfig(nlm, vm[0], vm[1])
+                        if vm[1]:
+                            DelVlanConfig(nlm, vm[0], vm[1])
                         vlanDBLock.release()
                     del vmDB[element]
                 vmDBLock.release()
@@ -1445,7 +1449,8 @@ def AddStaticMac(nlm, mac, intf, vlanId):
     idx = Intf.GetIfIndex(nlm, intf)
     neigh.body = struct.pack(neigh.PACK, socket.AF_BRIDGE, idx, nud_state, ntf, 0)
     neigh.add_attribute(neigh.NDA_LLADDR, mac)
-    neigh.add_attribute(neigh.NDA_VLAN, vlanId)
+    if vlanId:
+        neigh.add_attribute(neigh.NDA_VLAN, vlanId)
     neigh.build_message(nlm.sequence.next(), nlm.pid)
     nlm.tx_nlpacket_raw(neigh.message)
 
@@ -1461,7 +1466,8 @@ def DelStaticMac(nlm, mac, intf, vlanId):
     idx = Intf.GetIfIndex(nlm, intf)
     neigh.body = struct.pack(neigh.PACK, socket.AF_BRIDGE, idx, nud_state, ntf, 0)
     neigh.add_attribute(neigh.NDA_LLADDR, mac)
-    neigh.add_attribute(neigh.NDA_VLAN, vlanId)
+    if vlanId:
+        neigh.add_attribute(neigh.NDA_VLAN, vlanId)
     neigh.build_message(nlm.sequence.next(), nlm.pid)
     nlm.tx_nlpacket_raw(neigh.message)
 
