@@ -1,0 +1,119 @@
+#! /bin/bash
+useradd cumulus
+echo 'cumulus:CumulusLinux!' | sudo chpasswd
+usermod -aG sudo cumulus
+mkdir /home/cumulus/
+mkdir /home/cumulus/.ssh
+echo "" >> /home/cumulus/.ssh/authorized_keys
+chmod 700 -R /home/cumulus
+chown -R cumulus:cumulus /home/cumulus
+chsh -s /bin/bash cumulus
+sed "s/PasswordAuthentication no/PasswordAuthentication yes/" -i /etc/ssh/sshd_config
+echo '' > /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:00", NAME="eth0", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:01", NAME="swp1", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:02", NAME="swp2", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:03", NAME="swp3", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:49", NAME="swp49", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:50", NAME="swp50", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:02:51", NAME="swp51", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+sudo sed -i 's/cumulus/leaf02/g' /etc/hosts
+
+sudo sh -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
+
+cat << EOT > /etc/network/interfaces
+auto lo
+iface lo inet loopback
+    # The primary network interface
+    address 10.0.0.12/32
+
+# The primary network interface
+auto eth0
+iface eth0
+
+auto swp1
+iface swp1
+    mtu 9216
+
+auto swp2
+iface swp2
+    mtu 9216
+
+auto swp3
+iface swp3
+    mtu 9216
+
+auto swp49
+iface swp49
+    mtu 9216
+
+auto swp50
+iface swp50
+    mtu 9216
+
+auto swp51
+iface swp51
+
+auto bridge
+iface bridge
+    bridge-ports peerlink
+    bridge-vids 1
+    bridge-vlan-aware yes
+
+auto peerlink
+iface peerlink
+  bond-slaves swp49 swp50
+
+auto peerlink.4094
+iface peerlink.4094
+   clagd-peer-ip linklocal
+   clagd-priority 1000
+   clagd-sys-mac 44:38:39:FF:40:00
+
+auto vlan1
+iface vlan1
+    address 10.1.1.200/24
+    address-virtual 00:00:5e:00:01:01 10.1.1.1/24
+    vlan-id 1
+    vlan-raw-device bridge
+EOT
+
+cat << EOT >> /etc/frr/frr.conf
+frr version 4.0+cl3u8
+frr defaults datacenter
+hostname leaf02
+username cumulus nopassword
+!
+service integrated-vtysh-config
+!
+log syslog informational
+!
+router bgp 65012
+ bgp router-id 10.0.0.12
+ neighbor swp51 interface remote-as external
+ !
+ address-family ipv4 unicast
+  network 10.0.0.12/32
+  network 10.1.1.0/24
+ exit-address-family
+!
+line vty
+!
+EOT
+
+echo "10.0.0.11    leaf01" >> /etc/hosts
+echo "10.0.0.12    leaf02" >> /etc/hosts
+echo "10.0.0.21    exit" >> /etc/hosts      
+
+echo "zebra=yes" > /etc/frr/daemons
+echo "bgpd=yes" >> /etc/frr/daemons
+
+reboot

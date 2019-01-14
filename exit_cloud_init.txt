@@ -1,0 +1,104 @@
+#! /bin/bash
+useradd cumulus
+echo 'cumulus:CumulusLinux!' | sudo chpasswd
+usermod -aG sudo cumulus
+mkdir /home/cumulus/
+mkdir /home/cumulus/.ssh
+echo "" >> /home/cumulus/.ssh/authorized_keys
+chmod 700 -R /home/cumulus
+chown -R cumulus:cumulus /home/cumulus
+chsh -s /bin/bash cumulus
+sed "s/PasswordAuthentication no/PasswordAuthentication yes/" -i /etc/ssh/sshd_config
+echo '' > /etc/udev/rules.d/70-persistent-net.rules
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:03:00", NAME="eth0", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:03:01", NAME="swp1", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:03:02", NAME="swp2", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+echo 'ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="44:38:39:00:03:03", NAME="swp3", SUBSYSTEMS=="pci"' >> /etc/udev/rules.d/70-persistent-net.rules
+
+cat << EOT > /etc/network/interfaces
+auto lo
+iface lo inet loopback
+   address 10.0.0.21/32
+
+auto swp1
+iface swp1
+
+auto swp2
+iface swp2
+
+
+
+auto swp3
+iface swp3
+   address 172.16.1.10/24
+EOT
+
+sudo sed -i 's/cumulus/exit/g' /etc/hosts
+
+cat << EOT > /etc/frr/frr.conf
+frr version 4.0+cl3u8
+frr defaults datacenter
+hostname exit
+username cumulus nopassword
+!
+service integrated-vtysh-config
+!
+log syslog informational
+!
+router bgp 65020
+ bgp router-id 10.0.0.21
+ bgp bestpath as-path multipath-relax
+ neighbor swp1 interface remote-as external
+ neighbor swp2 interface remote-as external
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  redistribute static
+ exit-address-family
+!
+ip route 0.0.0.0/0 172.16.1.1
+!
+line vty
+!
+EOT
+
+sh -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
+echo "10.0.0.11    leaf01" >> /etc/hosts
+echo "10.0.0.12    leaf02" >> /etc/hosts
+echo "10.0.0.21    exit" >> /etc/hosts   
+
+echo "zebra=yes" > /etc/frr/daemons
+echo "bgpd=yes" >> /etc/frr/daemons
+
+cat << EOT > /etc/init.d/nat_rules.sh
+#!/bin/bash
+
+# Map Nutanix Cluster IP to 9440
+iptables -A PREROUTING -t nat -i swp3 -p tcp --dport 9440 -j DNAT --to 10.1.1.123:9440
+iptables -A FORWARD -p tcp -d 10.1.1.123 --dport 9440 -j ACCEPT
+
+# Map Nutanix01 to 9441
+iptables -A PREROUTING -t nat -i swp3 -p tcp --dport 9441 -j DNAT --to 10.1.1.11:9440
+iptables -A FORWARD -p tcp -d 10.1.1.11 --dport 9441 -j ACCEPT
+
+# Map Nutanix02 to 9442
+iptables -A PREROUTING -t nat -i swp3 -p tcp --dport 9442 -j DNAT --to 10.1.1.21:9440
+iptables -A FORWARD -p tcp -d 10.1.1.12 --dport 9442 -j ACCEPT
+
+# Map Nutanix03 to 9443
+iptables -A PREROUTING -t nat -i swp3 -p tcp --dport 9443 -j DNAT --to 10.1.1.31:9440
+iptables -A FORWARD -p tcp -d 10.1.1.13 --dport 9443 -j ACCEPT
+
+# Build outbound PAT rules for internet access
+iptables -t nat -A POSTROUTING -o swp3 -j MASQUERADE
+iptables -A FORWARD -i swp3 -o swp1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i swp3 -o swp2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+EOT
+
+chmod +x /etc/init.d/nat_rules.sh
+update-rc.d nat_rules.sh defaults
+
+reboot
