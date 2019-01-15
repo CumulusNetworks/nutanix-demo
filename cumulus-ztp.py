@@ -359,6 +359,8 @@ def apply_nclu_config():
 
 
 if __name__ == '__main__':
+    # TODO: Check for CL 3.7.2 or later.
+
     load_config()
     install_license()
 
