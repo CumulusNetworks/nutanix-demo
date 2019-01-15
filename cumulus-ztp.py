@@ -64,8 +64,15 @@ def install_license():
         print("Error installing license, please double check that the license.txt file is valid")
         exit(1)
 
-    else:
-        return
+    subprocess.Popen(["systemctl", "reset-failed", "switchd.service"], stdout=subprocess.PIPE)
+    subprocess.Popen(["systemctl", "restart", "switchd.service"], stdout=subprocess.PIPE)
+
+    proc = subprocess.Popen(["systemctl", "is-active", "switchd.service"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        print("Unable to start switchd after applying a license."
+              + " Please view \"journalctl -u switchd.service\" for more information. Exiting.")
+    exit(1)
 
 
 def check_nclu_ready():
