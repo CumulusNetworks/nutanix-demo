@@ -303,7 +303,11 @@ class IntfSupport():
         srcLinkInfo = msg.get_attribute_value(msg.IFLA_LINKINFO, {})
         kind = srcLinkInfo.get(msg.IFLA_INFO_KIND)
         srcLinkData = srcLinkInfo.get(msg.IFLA_INFO_DATA, {})
-        linkData = {msg.IFLA_VLAN_ID: srcLinkData.get(msg.IFLA_VLAN_ID)} if kind == 'vlan' else {}
+        linkData = {}
+        if kind == 'vlan':
+            linkData = {msg.IFLA_VLAN_ID: srcLinkData.get(msg.IFLA_VLAN_ID)}
+        elif kind == 'vxlan':
+            linkData = {msg.IFLA_VXLAN_ID: srcLinkData.get(msg.IFLA_VXLAN_ID)}
         linkInfo = {
             msg.IFLA_INFO_KIND : kind,
             msg.IFLA_INFO_DATA : linkData
@@ -395,6 +399,20 @@ class IntfSupport():
             vlanId = data.get(nlmanager.nlpacket.Link.IFLA_VLAN_ID)
         self.ifInfoLock.release()
         return vlanId
+
+    def GetVxlanIface(self, vxlanId):
+        self.ifInfoLock.acquire()
+        ifName = None
+        for ifDict in self.ifInfoByIndex.itervalues():
+            info = ifDict.get(nlmanager.nlpacket.Link.IFLA_LINKINFO, {})
+            if info.get(nlmanager.nlpacket.Link.IFLA_INFO_KIND) == "vxlan":
+                data = info.get(nlmanager.nlpacket.Link.IFLA_INFO_DATA, {})
+                vni = data.get(nlmanager.nlpacket.Link.IFLA_VXLAN_ID)
+                if vxlanId == vni:
+                    ifName = ifDict.get(nlmanager.nlpacket.Link.IFLA_IFNAME)
+                    break
+        self.ifInfoLock.release()
+        return ifName
 
 
 class WebHookHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -991,8 +1009,7 @@ class WorkQueue:
                             log_info("VM %s added" % vm_name)
                             if bond_name:
                                 vlanDBLock.acquire()
-                                if vlanId:
-                                    AddVlanConfig(nlm, bond_name, vlanId)
+                                AddVlanConfig(nlm, bond_name, vlanId)
                                 vlanDBLock.release()
                                 AddStaticMac(nlm, mac, bond_name, vlanId)
                             else:
@@ -1005,14 +1022,12 @@ class WorkQueue:
                             if vm[0]:
                                 DelStaticMac(nlm, vm[4], vm[0], vm[1])
                                 vlanDBLock.acquire()
-                                if vm[1]:
-                                    DelVlanConfig(nlm, vm[0], vm[1])
+                                DelVlanConfig(nlm, vm[0], vm[1])
                                 vlanDBLock.release()
                             vmDB[vm_uuid] = [bond_name, vlanId, host_name, vm_name, mac]
                             if bond_name:
                                 vlanDBLock.acquire()
-                                if vlanId:
-                                    AddVlanConfig(nlm, bond_name, vlanId)
+                                AddVlanConfig(nlm, bond_name, vlanId)
                                 vlanDBLock.release()
                                 AddStaticMac(nlm, mac, bond_name, vlanId)
                             else:
@@ -1027,8 +1042,7 @@ class WorkQueue:
                     if vm[0]:
                         DelStaticMac(nlm, vm[4], vm[0], vm[1])
                         vlanDBLock.acquire()
-                        if vm[1]:
-                            DelVlanConfig(nlm, vm[0], vm[1])
+                        DelVlanConfig(nlm, vm[0], vm[1])
                         vlanDBLock.release()
                     del vmDB[element]
                 vmDBLock.release()
@@ -1325,6 +1339,8 @@ def DelVlanConfigNeighDel(nlm, iface, neighbor):
             vmDB[vm][0] = None
 
 def AddVlanConfig(nlm, bond, vlanId):
+    if not vlanId:
+        return
     bond_idx = Intf.GetIfIndex(nlm, bond)
     bridge = Intf.GetBridge()
     bridge_idx = Intf.GetIfIndex(nlm, bridge)
@@ -1345,8 +1361,9 @@ def AddVlanConfig(nlm, bond, vlanId):
         return
 
     vx_dev_idx = Intf.GetIfIndex(nlm, vx_dev)
-    vx_dev_config = True if vx_dev_idx and vxlan_config else False
-    if not vx_dev_idx and vxlan_config:
+    vx_dev_name = Intf.GetVxlanIface(vlanId)
+    vx_dev_config = True if vx_dev_idx or vx_dev_name else False
+    if vxlan_config and not vx_dev_config:
         log_info("Adding VxLan device %s" % vx_dev)
         nlm.link_add_vxlan(vx_dev, vlanId, dstport=4789, local=vxlan_local_ip, learning=False, ageing=1800)
         vx_dev_idx = Intf.GetIfIndex(nlm, vx_dev)
@@ -1377,6 +1394,8 @@ def AddVlanConfig(nlm, bond, vlanId):
         nlm.link_add_bridge_vlan(bridge_idx, vlanId)
 
 def DelVlanConfig(nlm, bond, vlanId):
+    if not vlanId:
+        return
     bond_idx = Intf.GetIfIndex(nlm, bond)
     bridge = Intf.GetBridge()
     bridge_idx = Intf.GetIfIndex(nlm, bridge)
@@ -1388,15 +1407,17 @@ def DelVlanConfig(nlm, bond, vlanId):
             if vlanDB[vlanId][1][bond][0] > 1:
                 vlanDB[vlanId][1][bond][0] -= 1
                 return
-            del vlanDB[vlanId][1][bond]
-            log_info("Deleting vlan %d from %s" % (vlanId, bond))
-            nlm.vlan_modify(nlmanager.nlpacket.RTM_DELLINK, bond_idx, vlanId, bridge_master=bridge_idx)
+            if not vlanDB[vlanId][1][bond][1]:
+                del vlanDB[vlanId][1][bond]
+                log_info("Deleting vlan %d from %s" % (vlanId, bond))
+                nlm.vlan_modify(nlmanager.nlpacket.RTM_DELLINK, bond_idx, vlanId, bridge_master=bridge_idx)
         return
 
     if bond in vlanDB[vlanId][1]:
-        del vlanDB[vlanId][1][bond]
-        log_info("Deleting vlan %d from %s" % (vlanId, bond))
-        nlm.vlan_modify(nlmanager.nlpacket.RTM_DELLINK, bond_idx, vlanId, bridge_master=bridge_idx)
+        if not vlanDB[vlanId][1][bond][1]:
+            del vlanDB[vlanId][1][bond]
+            log_info("Deleting vlan %d from %s" % (vlanId, bond))
+            nlm.vlan_modify(nlmanager.nlpacket.RTM_DELLINK, bond_idx, vlanId, bridge_master=bridge_idx)
     if not vlan[2]:
         peerlink = Intf.GetPeerlink()
         peerlink_idx = Intf.GetIfIndex(nlm, peerlink)
