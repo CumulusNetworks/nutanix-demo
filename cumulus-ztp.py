@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # CUMULUS-AUTOPROVISIONING
 
 # Copyright (C) 2019 Cumulus Networks, Inc. All rights reserved
@@ -26,12 +26,15 @@
 #
 
 import logging
+import logging.handlers
 import subprocess
 import os
 import json
 import time
 import socket
+import requests
 
+VX = False
 USERNAME = None
 PASSWORD = None
 CLUSTER_IP = None
@@ -39,13 +42,26 @@ MANAGEMENT_IP = None
 UPLINKS = None
 GATEWAY = None
 PEERLINK = "swp49,swp50"
-logger = logging.getLogger("cumulus-hyperconverged")
 
-if "ZTP_USB_MOUNTPOINT" in os.environ:
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+handler = logging.handlers.SysLogHandler(address='/dev/log')
+formatter = logging.Formatter(
+    "Nutanix ZTP[%(process)d]: %(message)s", None)
+handler.setFormatter(formatter)
+log.addHandler(handler)
+
+if "ZTP_USB_MOUNTPOINT" in os.environ and not VX:
     ZTP = os.environ.get("ZTP_USB_MOUNTPOINT")
 else:
-    logger.info("Unable to determine where this ZTP script lives. Exiting")
+    log.info("Unable to determine where this ZTP script lives. Exiting")
     exit(1)
+
+if VX:
+    r = requests.get("http://192.168.0.254/ztp_config.txt")
+    open("/home/cumulus/ztp_config.txt", "w+").write(r.content)
+
+    ZTP = "/home/cumulus/"
 
 
 def check_license():
@@ -53,28 +69,32 @@ def check_license():
     Check if the switch is licensed
     '''
     # cl-license returns 0 if the license is installed
-    return subprocess.Popen(["cl-license",], stdout=subprocess.PIPE).returncode == 0
+    return subprocess.Popen(["cl-license", ], stdout=subprocess.PIPE).returncode == 0
 
 
 def install_license():
     '''
     install a Cumulus license
     '''
-    subprocess.Popen(["cl-license", "-i", ZTP + "license.txt"], stdout=subprocess.PIPE)
+    subprocess.Popen(["cl-license", "-i", ZTP + "license.txt"],
+                     stdout=subprocess.PIPE)
 
     if check_license():
-        logger.info("Error installing license, please check that the license.txt file is valid")
+        log.info(
+            "Error installing license, please check that the license.txt file is valid")
         exit(1)
 
-    subprocess.Popen(["systemctl", "reset-failed", "switchd.service"], stdout=subprocess.PIPE)
-    subprocess.Popen(["systemctl", "restart", "switchd.service"], stdout=subprocess.PIPE)
+    subprocess.Popen(["systemctl", "reset-failed",
+                      "switchd.service"], stdout=subprocess.PIPE)
+    subprocess.Popen(
+        ["systemctl", "restart", "switchd.service"], stdout=subprocess.PIPE)
 
     proc = subprocess.Popen(["systemctl", "is-active", "switchd.service"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        logger.info("Unable to start switchd after applying a license."
-                    + " Please view \"journalctl -u switchd.service\""
-                    + "for more information. Exiting.")
+        log.info("Unable to start switchd after applying a license."
+                 + " Please view \"journalctl -u switchd.service\""
+                 + "for more information. Exiting.")
     exit(1)
 
 
@@ -94,7 +114,7 @@ def get_interfaces():
     err = proc.communicate()[1]
 
     if proc.returncode != 0:
-        logger.info("Problem fetching interfaces. Maybe an issue with NCLU? " + err)
+        log.info("Problem fetching interfaces. Maybe an issue with NCLU? " + err)
         exit(1)
 
     return json.loads(proc.communicate()[0])
@@ -117,7 +137,7 @@ def set_swp_mtu(interfaces):
     if proc.returncode == 0:
         return True
     else:
-        logger.info("Encounter an error setting MTU. " + str(err))
+        log.info("Encounter an error setting MTU. " + str(err))
         exit(1)
 
 
@@ -129,8 +149,8 @@ def enable_mgmt_vrf():
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if proc.returncode != 0:
-        logger.info("Encountered an error configuring management VRF. "
-                    + str(proc.communicate()[1]))
+        log.info("Encountered an error configuring management VRF. "
+                 + str(proc.communicate()[1]))
         exit(1)
 
     if MANAGEMENT_IP:
@@ -138,8 +158,8 @@ def enable_mgmt_vrf():
                                  MANAGEMENT_IP], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if proc.returncode != 0:
-            logger.info("Encountered an error assigning IP address "
-                        + MANAGEMENT_IP + " to eth0. " + str(proc.communicate()[1]))
+            log.info("Encountered an error assigning IP address "
+                     + MANAGEMENT_IP + " to eth0. " + str(proc.communicate()[1]))
         exit(1)
 
         if GATEWAY:
@@ -148,8 +168,8 @@ def enable_mgmt_vrf():
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if proc.returncode != 0:
-                logger.info("Encountered an error assigning the default gateway " + GATEWAY
-                            + " to the management interface." + str(proc.communicate()[1]))
+                log.info("Encountered an error assigning the default gateway " + GATEWAY
+                         + " to the management interface." + str(proc.communicate()[1]))
             exit(1)
 
 
@@ -168,7 +188,7 @@ def load_config():
     try:
         file = open(ZTP + "ztp_config.txt")
     except IOError:
-        logger.info("Unable to open ztp_config.txt file. Exiting")
+        log.info("Unable to open ztp_config.txt file. Exiting")
         exit(1)
 
     with file:
@@ -202,13 +222,13 @@ def load_config():
         error = "NUTANIX_IP"
 
     if error:
-        logger.info(error + " not defined in the ztp_config.txt file. Exiting")
+        log.info(error + " not defined in the ztp_config.txt file. Exiting")
         exit(1)
 
     try:
         socket.inet_aton(CLUSTER_IP)
     except socket.error:
-        logger.info("Invalid NUTANIX_IP. Exiting")
+        log.info("Invalid NUTANIX_IP. Exiting")
         exit(1)
 
     return True
@@ -234,7 +254,8 @@ def build_nutanix_config():
     try:
         file = open("/usr/default/cumulus-hyperconverged", "w+")
     except IOError:
-        logger.info("Unable to open Cumulus HCS file /usr/default/cumulus-hyperconverged. Exiting")
+        log.info(
+            "Unable to open Cumulus HCS file /usr/default/cumulus-hyperconverged. Exiting")
         exit(1)
 
     file.write("\n".join(output_lines))
@@ -248,29 +269,29 @@ def configure_uplinks():
     """
     for interface in UPLINKS.split(","):
         if interface[:3] != "swp":
-            logger.info("Invalid interface in UPLINK list. Exiting")
+            log.info("Invalid interface in UPLINK list. Exiting")
             exit(1)
 
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "ports",
                              UPLINKS], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if proc.returncode != 0:
-        logger.info("Encountered an error placing uplink interfaces "
-                    + UPLINKS + " into a bridge. " + str(proc.communicate()[1]))
+        log.info("Encountered an error placing uplink interfaces "
+                 + UPLINKS + " into a bridge. " + str(proc.communicate()[1]))
     exit(1)
 
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "vids",
                              "1-2999"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        logger.info("Encountered an error adding VLANs 1-2999. "
-                    + str(proc.communicate()[1]))
+        log.info("Encountered an error adding VLANs 1-2999. "
+                 + str(proc.communicate()[1]))
     exit(1)
 
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "vids",
                              "4000-4095"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        logger.info("Encountered an error adding VLANs 4000-4095. "
-                    + str(proc.communicate()[1]))
+        log.info("Encountered an error adding VLANs 4000-4095. "
+                 + str(proc.communicate()[1]))
     exit(1)
 
 
@@ -287,9 +308,9 @@ def enable_hyperconverged_service():
     proc = subprocess.Popen(["systemctl", "is-active", "cumulus-hyperconverged.service"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        logger.info("Encountered an error enabling cumulus-hyperconverged.service. "
-                    + "Please check \"journalctl -u cumulus-hyperconverged.service\""
-                    + "for more information")
+        log.info("Encountered an error enabling cumulus-hyperconverged.service. "
+                 + "Please check \"journalctl -u cumulus-hyperconverged.service\""
+                 + "for more information")
     exit(1)
 
 
@@ -322,18 +343,19 @@ def enable_clag():
     try:
         file = open("/etc/network/interfaces", "a+")
     except IOError:
-        logger.info("Unable to open /etc/network/interfaces file. Exiting")
+        log.info("Unable to open /etc/network/interfaces file. Exiting")
         exit(1)
 
     file.write("\n".join(clag_lines))
     file.close()
 
-    proc = subprocess.Popen(["ifreload", "-a"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ["ifreload", "-a"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if proc.returncode != 0:
-        logger.info("Unable to apply peerlink interface configuration, "
-                    + "verify that the peerlink ports exist. Exiting. "
-                    + proc.communicate()[1])
+        log.info("Unable to apply peerlink interface configuration, "
+                 + "verify that the peerlink ports exist. Exiting. "
+                 + proc.communicate()[1])
     exit(1)
 
 
@@ -359,8 +381,8 @@ def apply_nclu_config():
     proc = subprocess.Popen(["net", "commit"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        logger.info("Encountered an error applying NCLU configuration."
-                    + " Exiting. " + proc.communicate()[1])
+        log.info("Encountered an error applying NCLU configuration."
+                 + " Exiting. " + proc.communicate()[1])
     exit(1)
 
 
@@ -370,15 +392,10 @@ def main():
     '''
     # TODO: Check for CL 3.7.2 or later.
 
-    facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    handler = logging.handlers.SysLogHandler(address="/dev/log", facility=facility)
-    formatter = logging.Formatter("ZTP[%(process)d]: %(message)s", None)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
     load_config()
-    install_license()
+
+    if not VX:
+        install_license()
 
     # CLAG must be enabled before NCLU commands so that the /e/n/i config is in place
     enable_clag()
@@ -393,6 +410,7 @@ def main():
 
     # NTP config must happen after NCLU is applied
     place_ntp_in_vrf()
+
 
 if __name__ == '__main__':
     main()
