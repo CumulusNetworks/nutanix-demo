@@ -92,6 +92,7 @@ def check_nclu_ready():
     '''
     Check if NCLU and netd are ready
     '''
+    log.info("Checking for NCLU")
     return subprocess.Popen(["net", "show", "interface"], stdout=subprocess.PIPE).returncode == 0
 
 
@@ -101,13 +102,13 @@ def get_interfaces():
     '''
     proc = subprocess.Popen(["net", "show", "interface", "json"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    err = proc.communicate()[1]
+    (output, err) = proc.communicate()
 
     if proc.returncode != 0:
         log.info("Problem fetching interfaces. Maybe an issue with NCLU? %s", err)
         exit(1)
 
-    return json.loads(proc.communicate()[0])
+    return json.loads(output)
 
 
 def set_swp_mtu(interfaces):
@@ -117,7 +118,7 @@ def set_swp_mtu(interfaces):
     log.info("Enabling front panel ports")
     interface_line = []
 
-    for interface in interfaces():
+    for interface in interfaces.keys():
         if interface[:3] == "swp":
             interface_line.append(interface)
 
@@ -139,28 +140,32 @@ def enable_mgmt_vrf():
     log.info("Configuring eth0 interface")
     proc = subprocess.Popen(["net", "add", "vrf", "mgmt"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc.wait()
+    (output, err) = proc.communicate()
 
     if proc.returncode != 0:
-        log.info("Encountered an error configuring management VRF. %s", str(proc.communicate()[1]))
+        log.info("Encountered an error configuring management VRF. %s", str(err))
         exit(1)
 
     if MANAGEMENT_IP:
         proc = subprocess.Popen(["net", "add", "interface", "eth0", "ip", "address",
                                  MANAGEMENT_IP], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        proc.wait()
+        (output, err) = proc.communicate()
         if proc.returncode != 0:
             log.info("Encountered an error assigning IP address"
-                     "%s to eth0. %s", MANAGEMENT_IP, str(proc.communicate()[1]))
+                     "%s to eth0. %s", MANAGEMENT_IP, str(err))
         exit(1)
 
         if GATEWAY:
             proc = subprocess.Popen(["net", "add", "routing", "route", "0.0.0.0/0",
                                      GATEWAY, "vrf", "mgmt"],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+            (output, err) = proc.communicate()
+            proc.wait()
             if proc.returncode != 0:
                 log.info("Encountered an error assigning the default gateway %s"
-                         "to the management interface. %s", GATEWAY, str(proc.communicate()[1]))
+                         "to the management interface. %s", GATEWAY, str(output))
             exit(1)
 
 
@@ -245,10 +250,10 @@ def build_nutanix_config():
     output_lines.append("")
 
     try:
-        file = open("/usr/default/cumulus-hyperconverged", "w+")
+        file = open("/etc/default/cumulus-hyperconverged", "w+")
     except IOError:
         log.info(
-            "Unable to open Cumulus HCS file /usr/default/cumulus-hyperconverged. Exiting")
+            "Unable to open Cumulus HCS file /etc/default/cumulus-hyperconverged. Exiting")
         exit(1)
 
     file.write("\n".join(output_lines))
@@ -269,24 +274,35 @@ def configure_uplinks():
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "ports",
                              UPLINKS], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    proc.wait()
+    (output, err) = proc.communicate()
+
     if proc.returncode != 0:
         log.info("Encountered an error placing uplink interfaces %s into a bridge. %s",
-                 UPLINKS, str(proc.communicate()[1]))
-    exit(1)
+                 UPLINKS, err)
+        exit(1)
 
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "vids",
                              "1-2999"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    proc.wait()
+    (output, err) = proc.communicate()
+
     if proc.returncode != 0:
         log.info("Encountered an error adding VLANs 1-2999. %s",
-                 proc.communicate()[1])
-    exit(1)
+                 err)
+        exit(1)
 
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "vids",
                              "4000-4095"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    proc.wait()
+    (output, err) = proc.communicate()
+
     if proc.returncode != 0:
         log.info("Encountered an error adding VLANs 4000-4095. %s",
-                 proc.communicate()[1])
-    exit(1)
+                 err)
+        exit(1)
 
 
 def enable_hyperconverged_service():
@@ -297,17 +313,32 @@ def enable_hyperconverged_service():
     log.info("Enabling cumulus-hyperconverged service")
     subprocess.Popen(["systemctl", "enable", "cumulus-hyperconverged.service"],
                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    subprocess.Popen(["systemctl", "start", "cumulus-hyperconverged.service"],
-                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    proc = subprocess.Popen(["systemctl", "is-active", "cumulus-hyperconverged.service"],
+    proc = subprocess.Popen(["systemctl", "start", "cumulus-hyperconverged.service"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if proc.returncode != 0:
-        log.info("Encountered an error enabling cumulus-hyperconverged.service. "
-                 "Please check \"journalctl -u cumulus-hyperconverged.service\""
-                 "for more information")
-    exit(1)
 
+    timer = 0
+    while timer < 30:
+
+        proc = subprocess.Popen(["systemctl", "show",
+                                 "cumulus-hyperconverged.service",
+                                 "--no-page"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (output, err) = proc.communicate()
+
+        for line in output:
+            if line.split("=")[0] == "ActiveState":
+                if line.split("=")[1] == "active":
+                    return
+
+        timer += 1
+        time.sleep(1)
+
+    log.info("Unable to start cumulus-hyperconverged service."
+             "Please check \"journalctl -u "
+             "cumulus-hyperconverged.service\""
+             "for more information. Exiting.")
+
+    exit(1)
 
 def enable_clag():
     '''
@@ -355,7 +386,7 @@ def enable_clag():
         log.info("Unable to apply peerlink interface configuration, "
                  "verify that the peerlink ports exist. Exiting. %s",
                  proc.communicate()[1])
-    exit(1)
+        exit(1)
 
 
 def place_ntp_in_vrf():
@@ -380,10 +411,11 @@ def apply_nclu_config():
     log.info("Applying configuration")
     proc = subprocess.Popen(["net", "commit"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     if proc.returncode != 0:
         log.info("Encountered an error applying NCLU configuration. Exiting. %s",
                  proc.communicate()[1])
-    exit(1)
+        exit(1)
 
 def check_version():
     '''
@@ -392,54 +424,47 @@ def check_version():
     '''
     global VX
 
-    proc = subprocess.Popen(["cat", "/etc/lsb-release"],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    err = proc.communicate()[1]
-
-    if proc.returncode != 0:
-        log.info("Unable to read /etc/lsb-release. Exiting. %s", err)
+    log.info("Checking Cumulus Version")
+    try:
+        file = open("/etc/lsb-release")
+    except IOError:
+        log.info("Unable to open /etc/lsb-release. Exiting")
         exit(1)
 
-    output = proc.communicate()[0]
-    for line in output:
-        split = line.strip().split("=")
-        key = split[0]
-        if key == "DISTRIB_RELEASE":
-            version = split[1]
-            if version.split(".")[0] < 3:
-                log.info("Hyperconverged Services only supported on Cumulus Linux"
-                         "versions 3.7.2 and later. Detected CL %d.x Exiting.",
-                         version.split(".")[0])
-                exit(1)
-
-                if version.split(".")[1] < 7:
+    with file:
+        for line in file:
+            split = line.strip().split("=")
+            key = split[0]
+            if key == "DISTRIB_RELEASE":
+                version = split[1]
+                if version.split(".")[0] < 3:
                     log.info("Hyperconverged Services only supported on Cumulus Linux"
-                             "versions 3.7.2 and later. Detected CL 3.%d Exiting",
-                             version.split(".")[1])
+                             "versions 3.7.2 and later. Detected CL %d.x Exiting.",
+                             version.split(".")[0])
                     exit(1)
 
-                    if version.split(".")[2] < 2:
+                    if version.split(".")[1] < 7:
                         log.info("Hyperconverged Services only supported on Cumulus Linux"
-                                 "versions 3.7.2 and later. Detected CL 3.7.%d Exiting.",
-                                 version.split(".")[2])
+                                 "versions 3.7.2 and later. Detected CL 3.%d Exiting",
+                                 version.split(".")[1])
                         exit(1)
 
-    proc = subprocess.Popen(["decode-syseeprom"],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    err = proc.communicate()[1]
+                        if version.split(".")[2] < 2:
+                            log.info("Hyperconverged Services only supported on Cumulus Linux"
+                                     "versions 3.7.2 and later. Detected CL 3.7.%d Exiting.",
+                                     version.split(".")[2])
+                            exit(1)
+
+    proc = subprocess.Popen(["decode-syseeprom"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (output, err) = proc.communicate()
 
     if proc.returncode != 0:
         log.info("Unable to read syseeprom. Exiting. %s", err)
         exit(1)
 
-    output = proc.communicate()[0]
-    for line in output:
-        if line.find("Product Name") == 0:
-            if len(line.split()) >= 3 and line.split()[3] == "VX":
-                VX = True
-        else:
-            log.info("Unable to determine platform version. ZTP will continue,"
-                     "but consider filing a GitHub issue")
+    if "VX" in output.split():
+        VX = True
+        log.info("Treating this as a Cumulus VX install.")
 
 def main():
     '''
@@ -469,12 +494,13 @@ def main():
 
     # CLAG must be enabled before NCLU commands so that the /e/n/i config is in place
     enable_clag()
-    while check_nclu_ready:
+    while check_nclu_ready():
         time.sleep(1)
 
     set_swp_mtu(get_interfaces())
     enable_mgmt_vrf()
     configure_uplinks()
+    build_nutanix_config()
     enable_hyperconverged_service()
     apply_nclu_config()
 
