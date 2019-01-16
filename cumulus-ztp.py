@@ -79,10 +79,24 @@ def install_license():
     subprocess.Popen(
         ["systemctl", "restart", "switchd.service"], stdout=subprocess.PIPE)
 
-    proc = subprocess.Popen(["systemctl", "is-active", "switchd.service"],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if proc.returncode != 0:
-        log.info("Unable to start switchd after applying a license."
+    timer = 0
+    while timer < 30:
+
+        proc = subprocess.Popen(["systemctl", "show",
+                                 "switchd.service",
+                                 "--no-page"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (output, err) = proc.communicate()
+
+        for line in output.split("\n"):
+            if line.split("=")[0] == "ActiveState":
+                if line.split("=")[1] == "active":
+                    return
+
+        timer += 1
+        time.sleep(1)
+
+    log.info("Unable to start switchd after applying a license."
                  "Please view \"journalctl -u switchd.service\""
                  "for more information. Exiting.")
     exit(1)
