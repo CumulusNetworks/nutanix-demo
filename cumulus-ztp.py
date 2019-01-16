@@ -58,7 +58,7 @@ def check_license():
     Check if the switch is licensed
     '''
     # cl-license returns 0 if the license is installed
-    return subprocess.Popen(["cl-license", ], stdout=subprocess.PIPE).returncode == 0
+    return subprocess.Popen(["cl-license"], stdout=subprocess.PIPE).returncode == 0
 
 
 def install_license():
@@ -513,7 +513,10 @@ def main():
 
     set_swp_mtu(get_interfaces())
     enable_mgmt_vrf()
-    configure_uplinks()
+
+    if UPLINKS:
+        configure_uplinks()
+
     build_nutanix_config()
     enable_hyperconverged_service()
     apply_nclu_config()
