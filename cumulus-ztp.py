@@ -294,7 +294,7 @@ def configure_uplinks():
         exit(1)
 
     proc = subprocess.Popen(["net", "add", "bridge", "bridge", "vids",
-                             "4000-4095"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             "4000-4094"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     proc.wait()
     (output, err) = proc.communicate()
@@ -325,7 +325,7 @@ def enable_hyperconverged_service():
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (output, err) = proc.communicate()
 
-        for line in output:
+        for line in output.split("\n"):
             if line.split("=")[0] == "ActiveState":
                 if line.split("=")[1] == "active":
                     return
