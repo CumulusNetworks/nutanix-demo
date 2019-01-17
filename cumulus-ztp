@@ -510,6 +510,7 @@ def main():
     else:
         if "ZTP_USB_MOUNTPOINT" in os.environ:
             ZTP = os.environ.get("ZTP_USB_MOUNTPOINT")
+            log.info("Setting ZTP mountpoint to %s", ZTP)
         else:
             log.info("Unable to determine where this ZTP script lives. Exiting")
             exit(1)
