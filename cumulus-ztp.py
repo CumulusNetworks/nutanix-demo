@@ -43,6 +43,7 @@ UPLINKS = None
 GATEWAY = None
 PEERLINK = "swp49,swp50"
 ZTP = None
+BRIDGE_IP = None
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -195,6 +196,7 @@ def load_config():
     global UPLINKS
     global GATEWAY
     global PEERLINK
+    global BRIDGE_IP
     error = False
 
     try:
@@ -225,6 +227,8 @@ def load_config():
                 GATEWAY = value
             if key == "PEERLINK":
                 PEERLINK = value
+            if key == "SWITCH_CVM_IP":
+                BRIDGE_IP = value
 
     if not USERNAME:
         error = "NUTANIX_USERNAME"
@@ -232,9 +236,11 @@ def load_config():
         error = "NUTANIX_PASSWORD"
     if not CLUSTER_IP:
         error = "NUTANIX_IP"
+    if not BRIDGE_IP:
+        error = "SWITCH_CVM_IP"
 
     if error:
-        log.info(" %s not defined in the ztp_config.txt file. Exiting", error)
+        log.info("%s not defined in the ztp_config.txt file. Exiting", error)
         exit(1)
 
     try:
@@ -380,6 +386,12 @@ def enable_clag():
     clag_lines.append("    bridge-vids 1")
     clag_lines.append("    bridge-vlan-aware yes")
     clag_lines.append("")
+    clag_lines.append("auto vlan1")
+    clag_lines.append("iface vlan1")
+    clag_lines.append("    address " + BRIDGE_IP)
+    clag_lines.append("    vlan-id 1")
+    clag_lines.append("    vlan-raw-device bridge")
+    clag_lines.append("")
 
     try:
         file = open("/etc/network/interfaces", "a+")
@@ -397,8 +409,9 @@ def enable_clag():
     proc.wait()
 
     if proc.returncode != 0:
-        log.info("Unable to apply peerlink interface configuration, "
-                 "verify that the peerlink ports exist. Exiting. %s",
+        log.info("Unable to apply peerlink or bridge interface configuration, "
+                 "verify that the peerlink ports exist or bridge IP is correct."
+                 "Exiting. %s",
                  proc.communicate()[1])
         exit(1)
 
