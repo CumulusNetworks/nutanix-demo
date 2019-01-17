@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # CUMULUS-AUTOPROVISIONING
 
 # Copyright (C) 2019 Cumulus Networks, Inc. All rights reserved
