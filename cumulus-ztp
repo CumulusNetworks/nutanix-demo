@@ -495,6 +495,7 @@ def check_version():
 
 
 def check_required_files():
+    log.info("Validating required files exist")
     try:
         open(ZTP + "/license.txt", "r")
     except IOError:
@@ -517,9 +518,6 @@ def main():
     global ZTP
 
     if VX:
-        req = requests.get("http://192.168.0.254/ztp_config.txt")
-        open("/home/cumulus/ztp_config.txt", "w+").write(req.content)
-
         ZTP = "/home/cumulus/"
     else:
         if "ZTP_USB_MOUNTPOINT" in os.environ:
