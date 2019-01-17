@@ -67,7 +67,7 @@ def install_license():
     install a Cumulus license
     '''
     log.info("Installing Cumulus Linux license")
-    subprocess.Popen(["cl-license", "-i", ZTP + "license.txt"],
+    subprocess.Popen(["cl-license", "-i", ZTP + "/license.txt"],
                      stdout=subprocess.PIPE)
 
     if check_license():
@@ -493,6 +493,20 @@ def check_version():
         VX = True
         log.info("Treating this as a Cumulus VX install.")
 
+
+def check_required_files():
+    try:
+        open(ZTP + "/license.txt", "r")
+    except IOError:
+        log.info("Could not find license.txt on the USB drive at %s/license.txt. Exiting.", ZTP)
+        exit(1)
+    try:
+        open(ZTP + "/ztp_config.txt", "r")
+    except IOError:
+        log.info("Could not find Nutanix settings file, ztp_config.txt on the USB drive"
+                 "at %s/ztp_config.txt. Exiting.", ZTP)
+
+
 def main():
     '''
     Main function
@@ -511,6 +525,7 @@ def main():
         if "ZTP_USB_MOUNTPOINT" in os.environ:
             ZTP = os.environ.get("ZTP_USB_MOUNTPOINT")
             log.info("Setting ZTP mountpoint to %s", ZTP)
+            check_required_files()
         else:
             log.info("Unable to determine where this ZTP script lives. Exiting")
             exit(1)
