@@ -67,13 +67,21 @@ def install_license():
     install a Cumulus license
     '''
     log.info("Installing Cumulus Linux license")
-    subprocess.Popen(["cl-license", "-i", ZTP + "/license.txt"],
-                     stdout=subprocess.PIPE)
 
     if check_license():
         log.info(
             "Error installing license, please check that the license.txt file is valid")
         exit(1)
+
+    try:
+        file = open("/etc/cumulus/.license", "w+")
+    except IOError:
+        log.info(
+            "Unable to open license file /etc/cumulus/.license. Exiting")
+        exit(1)
+
+    file.write("LICENSE_KEY_GOES_HERE")
+    file.close()
 
     subprocess.Popen(["systemctl", "reset-failed",
                       "switchd.service"], stdout=subprocess.PIPE)
@@ -496,11 +504,6 @@ def check_version():
 
 def check_required_files():
     log.info("Validating required files exist")
-    try:
-        open(ZTP + "/license.txt", "r")
-    except IOError:
-        log.info("Could not find license.txt on the USB drive at %s/license.txt. Exiting.", ZTP)
-        exit(1)
     try:
         open(ZTP + "/ztp_config.txt", "r")
     except IOError:
