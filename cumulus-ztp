@@ -443,9 +443,16 @@ def apply_nclu_config():
     Run "net commit"
     '''
     log.info("Applying configuration")
+
+    proc = subprocess.Popen(["net", "commit"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    log.info("Pending config: %s ", proc.communicate()[0])
+
     proc = subprocess.Popen(["net", "commit"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (output, err) = proc.communicate()
+
+    proc.wait()
 
     if proc.returncode != 0:
         log.info("Encountered an error applying NCLU configuration. Exiting. %s \n %s",
