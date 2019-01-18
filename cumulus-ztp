@@ -444,7 +444,7 @@ def apply_nclu_config():
     '''
     log.info("Applying configuration")
 
-    proc = subprocess.Popen(["net", "commit"],
+    proc = subprocess.Popen(["net", "pending"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     log.info("Pending config: %s ", proc.communicate()[0])
 
