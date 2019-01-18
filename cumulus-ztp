@@ -445,10 +445,11 @@ def apply_nclu_config():
     log.info("Applying configuration")
     proc = subprocess.Popen(["net", "commit"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (output, err) = proc.communicate()
 
     if proc.returncode != 0:
-        log.info("Encountered an error applying NCLU configuration. Exiting. %s",
-                 proc.communicate()[1])
+        log.info("Encountered an error applying NCLU configuration. Exiting. %s \n %s",
+                 output, err)
         exit(1)
 
 def check_version():
