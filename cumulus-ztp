@@ -219,7 +219,7 @@ def load_config():
             if len(split) <= 1:
                 continue
             key = split[0].upper()
-            value = split[1].replace('\r\n', '\n')
+            value = split[1]
             if key == "NUTANIX_USERNAME":
                 USERNAME = value
             if key == "NUTANIX_PASSWORD":
