@@ -89,7 +89,7 @@ def install_license():
         ["systemctl", "restart", "switchd.service"], stdout=subprocess.PIPE)
 
     timer = 0
-    while timer < 30:
+    while timer < 120:
 
         proc = subprocess.Popen(["systemctl", "show",
                                  "switchd.service",
