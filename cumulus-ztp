@@ -208,19 +208,18 @@ def load_config():
     error = False
 
     try:
-        file = open(ZTP + "ztp_config.txt")
+        file = open(ZTP + "/ztp_config.txt")
     except IOError:
         log.info("Unable to open ztp_config.txt file. Exiting")
         exit(1)
 
     with file:
         for line in file:
-            line = line.strip()
             split = line.strip().split("=")
             if len(split) <= 1:
                 continue
             key = split[0].upper()
-            value = split[1]
+            value = split[1].replace('\r\n', '\n')
             if key == "NUTANIX_USERNAME":
                 USERNAME = value
             if key == "NUTANIX_PASSWORD":
