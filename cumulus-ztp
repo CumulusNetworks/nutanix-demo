@@ -32,7 +32,7 @@ import os
 import json
 import time
 import socket
-import requests
+import sys
 
 VX = False
 USERNAME = None
