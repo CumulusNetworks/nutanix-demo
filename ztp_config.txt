@@ -7,7 +7,7 @@ NUTANIX_USERNAME=admin
 NUTANIX_PASSWORD=nutanix/4u
 # The IP address of a Nutanix CVM or the CVM anycast/cluster IP. (Required)
 NUTANIX_IP=10.1.1.123
-# IP address of this switch in the CVM subnet. Used to communicate to the Prism API.
+# IP address and subnet mask of this switch in the CVM subnet. Used to communicate to the Prism API.
 SWITCH_CVM_IP=10.1.1.254/24
 # If you do not want to use DHCP on the switch eth0, define the static switch IP and mask below. (Optional)
 #SWITCH_MANAGEMENT_IP=10.0.0.11/24
