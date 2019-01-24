@@ -178,7 +178,7 @@ def enable_mgmt_vrf():
         if proc.returncode != 0:
             log.info("Encountered an error assigning IP address"
                      "%s to eth0. %s", MANAGEMENT_IP, str(err))
-        exit(1)
+            exit(1)
 
         if GATEWAY:
             proc = subprocess.Popen(["net", "add", "routing", "route", "0.0.0.0/0",
@@ -189,7 +189,7 @@ def enable_mgmt_vrf():
             if proc.returncode != 0:
                 log.info("Encountered an error assigning the default gateway %s"
                          "to the management interface. %s", GATEWAY, str(output))
-            exit(1)
+                exit(1)
 
 
 def load_config():
