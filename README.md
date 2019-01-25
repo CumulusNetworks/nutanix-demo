@@ -1,9 +1,28 @@
+# Cumulus HCS Demo Guide
+This will walk you through the process of using Cumulus Hyperconverged Service (HCS) on Ravello. 
 
-The `cumulus-ztp` file is a python script that is designed to be used as a Zero Touch Provisioning script with Cumulus Linux 3.7.2 or later and will automatically provsion a switch for the Cumulus Hyperconverged Service (HCS). 
+## Topology
+(https://github.com/CumulusNetworks/nutanix-demo/blob/master/demo_topology.png)
 
-To use this ZTP script, perform the following:
-1. Copy `cumulus-ztp` and `ztp_config.txt` to a USB stick
-2. Edit `ztp_config.txt` and input information about your Nutanix cluster
-3. Without Cumulus on a Stick, edit `cumulus-ztp` and replace `LICENSE_KEY_GOES_HERE` with your license string
-4. Insert the USB stick into a switch running Cumulus Linux and the ZTP process will trigger automatically.
-5. Verify that ZTP completed with `ztp -s` and by viewing `/var/log/syslog` and looking for `ZTP` lines.
+The topology consists of:
+* 3 Nutanix nodes (NTNX-e08c61ec-A, NTNX-d618a06d-A, NTNX-4e6eac27-A) running Nutanix CE configured in a cluster
+* 2 Cumulus Linux switches (leaf01, leaf02) configured as an MLAG pair
+* 1 Cumulus Linux switch (exit01) acting as a jump host to get to and from the environment
+
+### IP Addressing
+* Nutanix Nodes
+** NTNX-4e6eac27-A KVM host: 10.1.1.10
+** NTNX-4e6eac27-A CVM: 10.1.1.11
+
+** NTNX-d618a06d-A KVM host: 10.1.1.20
+** NTNX-d618a06d-A CVM: 10.1.1.21
+
+** NTNX-4e6eac27-A KVM host: 10.1.1.30
+** NTNX-4e6eac27-A CVM: 10.1.1.31
+
+CVM Cluster IP: 10.1.1.123
+
+* Network Devices
+** leaf01: 10.0.0.11 (lo), 10.1.1.100/24 (Vlan1), 10.1.1.1/24 (VRR Gateway Address)
+** leaf02: 10.0.0.12 (lo), 10.1.1.200/24 (Vlan1), 10.1.1.1/24 (VRR Gateway Address)
+
