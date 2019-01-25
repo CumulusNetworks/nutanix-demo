@@ -64,3 +64,8 @@ _Note: This lab will cost around $7/hr on Ravello due to the CPU and memory requ
 It will take 10 minutes or more for Ravello to copy all of the disk images and fully publish your lab. 
 ![Publish Box](./ravello_images/publish_waiting.png "Publish Box")<br />
 During this time you will see hourglass icons on all of the VMs while they boot. 
+
+When all VMs have started the hourglass icon will be replaced with a green play button
+![VMs Started](./ravello_images/green_arrow.png "VMs Started")
+
+### Access the Lab
