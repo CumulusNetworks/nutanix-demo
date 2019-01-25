@@ -40,10 +40,10 @@ From the Ravello canvas you will see the 3 nutanix nodes, two leafs and exit.
 
 ### Verify Nutanix VM Requirements
 In order to run Nutanix CE on Ravello, you must enable nested virtualization on bare metal hosts. 
-![General Settings](./ravello_images/nutanix_settings.png "General Settings") 
+![General Settings](./ravello_images/nutanix_settings.png "General Settings")<br />
 To do this, select the Nutanix VM then on the right hand menu select `General` and then click the link at the bottom of the pane `Advanced Configuration`
 
-![Advanced Configuration](./ravello_images/advanced_configuration.png "Advanced Configuration") 
+![Advanced Configuration](./ravello_images/advanced_configuration.png "Advanced Configuration")<br />
 Set `cpu-model` to *SandbyBridge* 
 Set `preferPhysicalHost` to *true* _If you do not see this setting, open a case with Ravello support to enable it_ 
 Click `OK` 
@@ -53,7 +53,7 @@ Repeat this on all three Nutanix nodes. There are no settings to modify on eithe
 
 ### Start the Lab
 Now the lab blueprint must be "published" to a Ravello datacenter.
-![Publish Box](./ravello_images/publish.png "Publish Box") 
+![Publish Box](./ravello_images/publish.png "Publish Box")<br />
 
 Ravello gives the option of "Optimize for Cost" or "Optimize for Performance". Select `Performance`. 
 Choose the location geographically closest to you.
@@ -61,6 +61,6 @@ Choose the location geographically closest to you.
 Then click *Publish*. 
 _Note: This lab will cost around $7/hr on Ravello due to the CPU and memory requirements of Nutanix AHV._
  
-It will take some time for Ravello to copy all of the disk images and fully publish your lab. 
-![Publish Box](./ravello_images/publish_waiting.png "Publish Box") 
+It will take 10 minutes or more for Ravello to copy all of the disk images and fully publish your lab. 
+![Publish Box](./ravello_images/publish_waiting.png "Publish Box")<br />
 During this time you will see hourglass icons on all of the VMs while they boot. 
