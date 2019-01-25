@@ -2,7 +2,7 @@
 This will walk you through the process of using Cumulus Hyperconverged Service (HCS) on Ravello. 
 
 ## Topology
-(https://github.com/CumulusNetworks/nutanix-demo/blob/master/demo_topology.png)
+![Topology](./demo_topology.png "Topology")
 
 The topology consists of:
 * 3 Nutanix nodes (NTNX-e08c61ec-A, NTNX-d618a06d-A, NTNX-4e6eac27-A) running Nutanix CE configured in a cluster
