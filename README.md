@@ -35,13 +35,13 @@ The topology consists of:
 _TODO_
 
 ## Starting the lab
-From the Ravello canvas you will see the 3 nutanix nodes, two leafs and exit.
+From the Ravello canvas, you will see the 3 Nutanix nodes, two leafs and exit.
 ![Canvas](./ravello_images/canvas.png "Canvas")
 
 ### Verify Nutanix VM Requirements
 In order to run Nutanix CE on Ravello, you must enable nested virtualization on bare metal hosts. 
 ![General Settings](./ravello_images/nutanix_settings.png "General Settings")<br />
-To do this, select the Nutanix VM then on the right hand menu select `General` and then click the link at the bottom of the pane `Advanced Configuration`
+To do this, select the Nutanix VM then on the right-hand menu select `General` and then click the link at the bottom of the pane `Advanced Configuration`
 
 ![Advanced Configuration](./ravello_images/advanced_configuration.png "Advanced Configuration")<br />
 Set `cpu-model` to *SandbyBridge* 
@@ -83,8 +83,8 @@ password: `CumulusLinux!`
 
 ![SSH](./ravello_images/ssh_exit.png "SSH")<br />
 
-From the exit node you can ssh to either `leaf01` or `leaf02`. 
-If you wish to access the Nutanix console you can also ssh to any Nutanix IP address. The Nutanix nodes use the following credentails
+From the exit node, you can ssh to either `leaf01` or `leaf02`. 
+If you wish to access the Nutanix console you can also ssh to any Nutanix IP address. The Nutanix nodes use the following credentials
 KVM host username: `root`  
 KVM host password: `nutanix/4u`  
  
@@ -169,9 +169,9 @@ Depending on the browser, click advanced and "Continue" or "Ignore".
 
 _Note:_ The Prism services may take 10-15 minutes to start *after* the Nutanix VMs are online. Attempting to access the URL before the Prism services are online will result in an error that the page can not be found or `Oops - Server Error` message.
 
-_Note:_ Prism is only accessable via *HTTPS* and will not redirect from HTTP. If you access the Prism IP via HTTP you will receive an `Oops - Server Error` message.
+_Note:_ Prism is only accessible via *HTTPS* and will not redirect from HTTP. If you access the Prism IP via HTTP you will receive an `Oops - Server Error` message.
 
-At the login screen you can login with  
+At the login screen, you can login with  
 username: `admin`  
 password: `1CumulusLinux!`  
 
@@ -182,7 +182,7 @@ This provides a wealth of data about the Nutanix cluster. As a consequence of th
 ### Create a VM
 The Nutanix cluster that is provided as part of this lab contains three VM images: Ubuntu 18.04,  Cumulus Vx 3.7.2, Cirros0.4.0.  
 Cirros is a very lightweight Linux distribution designed for testing cloud and hypervisor deployments. 
-_Note:_ You may access the internet and add additional images to this cluster, however due to how Ravello deploys VMs and how this lab is specifically built the throughput to the internet will be very low and may cause cluster instability. 
+_Note:_ You may access the internet and add additional images to this cluster, however, due to how Ravello deploys VMs and how this lab is specifically built the throughput to the internet will be very low and may cause cluster instability. 
 
 ![VM Menu](./ravello_images/vm_table.gif "VM Menu")<br />
 
@@ -197,7 +197,7 @@ Now, create the first VM by selecting "+ Create VM" from the right side of the s
 In the new window provide the VM a name, `1 vCPU` and `1 GiB` of Memory.  
 Next, scroll down and remove the `CD-ROM` drive that is automatically added and select "+ Add New Disk"  
 In the "Add Disk" window, under "Operation" select `Clone from Image Service`  
-You may select any of the pre-populated VMs. For testing Cirros is recommented due to it's small footprint and speed. Select "Add".  
+You may select any of the pre-populated VMs. For testing, Cirros is recommended due to its small footprint and speed. Select "Add".  
 Scroll down further to "Network Adapters (NIC) and select "Add New NIC"  
 In the "Create NIC" window `VLAN10` will be selected by default. Click "Add"  
 Now select "Save" to create the VM. The VM is created, but powered off.  
@@ -205,17 +205,19 @@ Now select "Save" to create the VM. The VM is created, but powered off.
 ![Power On VM](./ravello_images/vlan_create.gif "Power on VM")<br />
 
 Back in the "VM Table" view, select the VM, then click "Power On" below the table.  
-When the VM is powered, AHV will notify the Cumulus Linux switches that a VM in VLAN 10 now exists and Cumulus HCS will create VLAN10 on the appropiate interfaces.  
+When the VM is powered, AHV will notify the Cumulus Linux switches that a VM in VLAN 10 now exists and Cumulus HCS will create VLAN10 on the appropriate interfaces.  
 You can view this change on either `leaf01` or `leaf02` with the command `net show bridge vlan`  
-_Tip:_ You can use the commnad `watch -n1 net show bridge vlan` to automatically run the command on repeat and watch the VLAN being created in real time. Use `ctrl + c` to exit out of the `watch` command.  
 
+*_Tip:_* You can use the command `watch -n1 net show bridge vlan` to automatically run the command on repeat and watch the VLAN being created in real time. Use `ctrl + c` to exit out of the `watch` command.  
+
+### Migrate a VM
 ![Migrating a VM](./ravello_images/vm_migrate.gif "Migrating a VM")<br />
 
 Next, we can migrate a VM to another Nutanix node and see the VLANs automatically update on the Cumulus Linux switches.  
 Again, in the "VM Table" view, select the VM and click "Migrate" from the bar below the table.  
 This will bring up a list of Nutanix hosts in the cluster. Select another host and the Nutanix AHV hypervisor will migrate the VM.  
 
-_Note:_ Nutanix automatically determines where to deploy the VM the first time the VM is created. When selecting a host to migrate to, select a host that is not currently running the VM. You can look at the `net show bridge vlan` output to easily see which Nutanix node is currently hosting the VM.
+*_Note:_* Nutanix automatically determines where to deploy the VM the first time the VM is created. When selecting a host to migrate to, select a host that is not currently running the VM. You can look at the `net show bridge vlan` output to easily see which Nutanix node is currently hosting the VM.
 
 | Bond Interface | Nutanix IP  |
 | ---------------|------------:| 
@@ -223,4 +225,71 @@ _Note:_ Nutanix automatically determines where to deploy the VM the first time t
 | bond_swp2      | 10.0.0.20   | 
 | bond_swp3      | 10.0.0.30   | 
 
-Again using the command `net show bridge` before and after the VM migration action will show the VLAN has moved. You can also use `watch -n1 net show bridge vlan` to see the change in realtime.
+Again using the command `net show bridge` before and after the VM migration action will show the VLAN has moved. You can also use `watch -n1 net show bridge vlan` to see the change in real-time.
+
+### Create a Second VM
+![Creating a Second VM](./ravello_images/create_second_vm.gif "Creating a Second VM")<br />
+
+Now, create a second VM in VLAN 20. Within Prism select "+ Create VM" on the right side of the VM screen.  
+Follow the same steps as before to add `1 vCPU`, `1 GiB` of Memory and remove the default `CD-ROM` disk.  
+Add a new Disk that is a `Clone from Image Service` and select `Cirros` again. 
+Finally, `Add New NIC` and this time select `VLAN20` from the dropdown menu.  
+Save the VM.
+
+![Second Dynamic VLAN](./ravello_images/second_vlan.gif "Second Dynamic VLAN")<br />
+
+Again, select the VM within the table and click "Power On" in the bar below the VM table. As the VM powers on you can view the new `VLAN 20` created and added with the output `net show bridge vlan` from a Cumulus Linux Device.
+
+### Powering Off a VM
+![Powering Off a VM](./ravello_images/second_vlan.gif "Powering Off a VM")<br />
+As a final test, select either VM from the VM Table and in the bar below select "Power Off Actions" and "Power Off".  
+Once the VM is powered off, with no remaining hosts in that VLAN, Cumulus HCS removes the VLAN from the switchports.  
+Again, view the change with `net show bridge vlan`
+
+### Viewing HCS Configuration
+The Cumulus HCS configuration is kept in `/etc/default/cumulus-hyperconverged` 
+```Shell
+cumulus@leaf01:~$ cat /etc/default/cumulus-hyperconverged
+### /etc/default/cumulus-hyperconverged config file
+# username for Prism (required)
+USERNAME=admin
+# password for Prism (required)
+PASSWORD=1CumulusLinux!
+# CVM address used by the service (required)
+SERVER=10.1.1.11
+# Hook server address (optional)
+#HOOK_SERVER=10.0.0.0
+# Hook port (optional)
+#HOOK_PORT=10.0.0.0
+# Socket timeout (optional)
+#SOCKET_TIMEOUT=10.0.0.0
+# single/multi rack configuration (optional)
+VXLAN_CONFIG=False
+# loglevel: verbose/debug (optional)
+#LOGLEVEL=verbose
+# periodic sync timeout (optional)
+#PERIODIC_SYNC_TIMEOUT=60
+```
+
+_Note:_ Within the Ravello lab a setting called `IPMI_BYPASS=True` may be seen. This is required due to limitations of the Nutanix API and Ravello. 
+
+Any changes to the `cumulus-hyperconverged` configuration file are applied with `systemctl restart cumulus-hyperconverged.service`.  
+_Note:_  Restarting the `cumulus-hyperconverged` service will cause any dynamically created bonds to be removed and recreated, causing a loss of link to the Nutanix cluster. Restarting the service on both leaf switches simultaneously will create a cluster outage.  
+
+You can view the status of Cumulus HCS with `systemctl status cumulus-hyperconverged.service`
+```Shell
+cumulus@leaf01:~$ sudo systemctl status cumulus-hyperconverged.service
+● cumulus-hyperconverged.service - Cumulus Linux Hyperconverged Daemon
+   Loaded: loaded (/lib/systemd/system/cumulus-hyperconverged.service; enabled)
+   Active: active (running) since Sat 2019-01-26 22:01:53 UTC; 8min ago
+ Main PID: 1131 (cumulus-hyperco)
+   CGroup: /system.slice/cumulus-hyperconverged.service
+           ├─1131 /usr/bin/python /usr/bin/cumulus-hyperconverged
+           └─1220 /usr/sbin/lldpcli -f json watch
+
+Jan 26 22:09:41 leaf01 ip[1131]: 10.1.1.31 - - [26/Jan/2019 22:09:41] "POST /hooks HTTP/1.1" 200 -
+Jan 26 22:10:03 leaf01 cumulus-hyperconverged[1131]: VM VM_in_VLAN20 added
+```
+
+## More Information
+For even more information about the Cumulus Hyperconverged Service, please vist the [Cumulus Networks HCI portal](https://cumulusnetworks.com/networking-solutions/converged-infrastructure/).
