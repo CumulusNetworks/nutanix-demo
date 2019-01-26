@@ -197,8 +197,15 @@ Now, create the first VM by selecting "+ Create VM" from the right side of the s
 In the new window provide the VM a name, `1 vCPU` and `1 GiB` of Memory.  
 Next, scroll down and remove the `CD-ROM` drive that is automatically added and select "+ Add New Disk"  
 In the "Add Disk" window, under "Operation" select `Clone from Image Service`  
-You may select any of the pre-populated VMs, but for Cumulus Linux testing Cirros is recommented due to it's small footprint and speed. Select "Add".  
+You may select any of the pre-populated VMs. For testing Cirros is recommented due to it's small footprint and speed. Select "Add".  
 Scroll down further to "Network Adapters (NIC) and select "Add New NIC"  
 In the "Create NIC" window `VLAN10` will be selected by default. Click "Add"  
 Now select "Save" to create the VM. The VM is created, but powered off.  
+
+![Power On VM](./ravello_images/vlan_create.gif "Power on VM")<br />
+
+Back in the "VM Table" view, select the VM, then click "Power On" below the table.  
+When the VM is powered, AHV will notify the Cumulus Linux switches that a VM in VLAN 10 now exists and Cumulus HCS will create VLAN10 on the appropiate interfaces.  
+You can view this change on either `leaf01` or `leaf02` with the command `net show bridge vlan`  
+_Tip:_ You can use the commnad `watch -n1 net show bridge vlan` to automatically run the command on repeat and watch the VLAN being created in real time. Use `ctrl + c` to exit out of the `watch` command.  
 
