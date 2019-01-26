@@ -161,11 +161,11 @@ Connect to `https://<IP_ADDRESS>:9440`
 
 You will receive a warning about the connection not being secure or about the SSL certificate.
 
-![SSL Warning](./ravello_images/ssh_warning.png "SSL Warning")<br />
+![SSL Warning](./ravello_images/ssl_error.gif "SSL Warning")<br />
 
-Depending on the browser, click advanced and "Continue" or ignore or whatever is the proper conf
+Depending on the browser, click advanced and "Continue" or "Ignore".
 
-![Prism Login](./ravello_images/nutanix_login.png "Prism Login")<br />
+![Prism Login](./ravello_images/prism_login.gif "Prism Login")<br />
 
 _Note:_ The Prism services may take 10-15 minutes to start *after* the Nutanix VMs are online. Attempting to access the URL before the Prism services are online will result in an error that the page can not be found or `Oops - Server Error` message.
 
@@ -174,3 +174,31 @@ _Note:_ Prism is only accessable via *HTTPS* and will not redirect from HTTP. If
 At the login screen you can login with  
 username: `admin`  
 password: `1CumulusLinux!`  
+
+After logging in you will be presented with the Prism Dashboard
+
+This provides a wealth of data about the Nutanix cluster. As a consequence of the lab deployment and provisioning "Critical" alerts are expected and may be ignored or resolved.
+
+### Create a VM
+The Nutanix cluster that is provided as part of this lab contains three VM images: Ubuntu 18.04,  Cumulus Vx 3.7.2, Cirros0.4.0.  
+Cirros is a very lightweight Linux distribution designed for testing cloud and hypervisor deployments. 
+_Note:_ You may access the internet and add additional images to this cluster, however due to how Ravello deploys VMs and how this lab is specifically built the throughput to the internet will be very low and may cause cluster instability. 
+
+![VM Menu](./ravello_images/vm_table.gif "VM Menu")<br />
+
+From the Prism dashboard click on "Home" to drop down the menu and select "VM"
+
+The VM dashboard will indicate there are 3 VMs running, these are the 3 Controller VMs (CVMs) running on each of the three Nutanix nodes.
+From the VM dashboard select "Table" table near the top left, next to "Overview".
+
+![Create VM](./ravello_images/create_first_vm.gif "Create VM")<br />
+
+Now, create the first VM by selecting "+ Create VM" from the right side of the screen.  
+In the new window provide the VM a name, `1 vCPU` and `1 GiB` of Memory.  
+Next, scroll down and remove the `CD-ROM` drive that is automatically added and select "+ Add New Disk"  
+In the "Add Disk" window, under "Operation" select `Clone from Image Service`  
+You may select any of the pre-populated VMs, but for Cumulus Linux testing Cirros is recommented due to it's small footprint and speed. Select "Add".  
+Scroll down further to "Network Adapters (NIC) and select "Add New NIC"  
+In the "Create NIC" window `VLAN10` will be selected by default. Click "Add"  
+Now select "Save" to create the VM. The VM is created, but powered off.  
+
