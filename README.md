@@ -209,3 +209,15 @@ When the VM is powered, AHV will notify the Cumulus Linux switches that a VM in 
 You can view this change on either `leaf01` or `leaf02` with the command `net show bridge vlan`  
 _Tip:_ You can use the commnad `watch -n1 net show bridge vlan` to automatically run the command on repeat and watch the VLAN being created in real time. Use `ctrl + c` to exit out of the `watch` command.  
 
+![Migrating a VM](./ravello_images/vm_migrate.gif "Migrating a VM")<br />
+
+Next, we can migrate a VM to another Nutanix node and see the VLANs automatically update on the Cumulus Linux switches.  
+Again, in the "VM Table" view, select the VM and click "Migrate" from the bar below the table.  
+This will bring up a list of Nutanix hosts in the cluster. Select another host and the Nutanix AHV hypervisor will migrate the VM.  
+_Note:_ Nutanix automatically determines where to deploy the VM the first time the VM is created. When selecting a host to migrate to, select a host that is not currently running the VM. You can look at the `net show bridge vlan` output to easily see which Nutanix node is currently hosting the VM.
+| Bond Interface | Nutanix IP  |
+| ---------------|------------:| 
+| bond_swp1      | 10.0.0.10   | 
+| bond_swp2      | 10.0.0.20   | 
+| bond_swp3      | 10.0.0.30   | 
+
