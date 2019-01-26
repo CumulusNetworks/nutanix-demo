@@ -78,16 +78,16 @@ Look at the right "Summary" panel for "VM is started" and use the IP in that box
 ![SSH to the Exit node](./ravello_images/ssh_exit.png "SSH to the Exit node")<br />
 
 SSH to the "exit" node and login with  
-username: `cumulus` 
+username: `cumulus`  
 password: `CumulusLinux!` 
 
 ![SSH](./ravello_images/ssh_exit.png "SSH")<br />
 
 From the exit node you can ssh to either `leaf01` or `leaf02`. 
 If you wish to access the Nutanix console you can also ssh to any Nutanix IP address. The Nutanix nodes use the following credentails
-KVM host username: `root` 
-KVM host password: `nutanix/4u` 
+KVM host username: `root`  
+KVM host password: `nutanix/4u`  
  
-CVM host SSH username: `nutanix`
+CVM host SSH username: `nutanix`  
 CVM host SSH password: `nutanix/4u`
 
