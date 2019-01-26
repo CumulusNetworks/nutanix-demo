@@ -91,3 +91,41 @@ KVM host password: `nutanix/4u`
 CVM host SSH username: `nutanix`  
 CVM host SSH password: `nutanix/4u`
 
+From `leaf01` view that the Nutanix nodes have been discovered via LLDP
+```Shell
+cumulus@leaf01:~$ net show lldp
+
+LocalPort  Speed  Mode           RemoteHost       RemotePort
+---------  -----  -------------  ---------------  ----------
+eth0       1G     Mgmt           leaf02           eth0
+swp1       1G     BondMember     NTNX-e08c61ec-A  ens3
+swp2       1G     BondMember     NTNX-d618a06d-A  ens3
+swp3       1G     BondMember     NTNX-4e6eac27-A  ens3
+swp49      1G     BondMember     leaf02           swp49
+swp50      1G     BondMember     leaf02           swp50
+swp51      1G     NotConfigured  exit             swp1
+```
+
+You can also view the dynamically created bonds
+```Shell
+cumulus@leaf01:~$ net show interface bonds
+    Name       Speed   MTU  Mode     Summary
+--  ---------  -----  ----  -------  ----------------------------------
+UP  bond_swp1  1G     1500  802.3ad  Bond Members: swp1(UP)
+UP  bond_swp2  1G     1500  802.3ad  Bond Members: swp2(UP)
+UP  bond_swp3  1G     1500  802.3ad  Bond Members: swp3(UP)
+UP  peerlink   2G     1500  802.3ad  Bond Members: swp49(UP), swp50(UP)
+```
+
+Finally, view that only VLAN 1 has been programmed in the spanning-tree bridge 
+```Shell
+cumulus@leaf01:~$ net show bridge vlan
+
+Interface  VLAN  Flags
+---------  ----  ---------------------
+bond_swp1     1  PVID, Egress Untagged
+bond_swp2     1  PVID, Egress Untagged
+bond_swp3     1  PVID, Egress Untagged
+bridge        1
+peerlink      1  PVID, Egress Untagged
+```
