@@ -2,6 +2,22 @@
 
 This will walk you through the process of using Cumulus Hyperconverged Service (HCS) on Ravello. 
 
+* [Cumulus HCS Demo Guide](#cumulus-hcs-demo-guide)
+   * [Topology](#topology)
+      * [IP Addressing](#ip-addressing)
+   * [Cloning the Ravello Blueprint](#cloning-the-ravello-blueprint)
+   * [Starting the lab](#starting-the-lab)
+      * [Verify Nutanix VM Requirements](#verify-nutanix-vm-requirements)
+      * [Start the Lab](#start-the-lab)
+      * [Access the Lab](#access-the-lab)
+      * [Access Nutanix Prism](#access-nutanix-prism)
+      * [Create a VM](#create-a-vm)
+      * [Migrate a VM](#migrate-a-vm)
+      * [Create a Second VM](#create-a-second-vm)
+      * [Powering Off a VM](#powering-off-a-vm)
+      * [Viewing HCS Configuration](#viewing-hcs-configuration)
+   * [More Information](#more-information)
+
 ## Topology
 
 ![Topology](./demo_topology.png "Topology")
