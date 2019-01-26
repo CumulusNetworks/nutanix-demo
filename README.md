@@ -221,3 +221,4 @@ _Note:_ Nutanix automatically determines where to deploy the VM the first time t
 | bond_swp2      | 10.0.0.20   | 
 | bond_swp3      | 10.0.0.30   | 
 
+Again using the command `net show bridge` before and after the VM migration action will show the VLAN has moved. You can also use `watch -n1 net show bridge vlan` to see the change in realtime.
