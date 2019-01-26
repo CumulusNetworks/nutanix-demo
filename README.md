@@ -14,13 +14,13 @@ The topology consists of:
 
 ### IP Addressing
 
-| Nutanix Node    | KVM IP    | CVM IP    |
-| -------------   |----------:| ---------:|
-| NTNX-4e6eac27-A | 10.1.1.10 | 10.1.1.11 |
-| NTNX-d618a06d-A | 10.1.1.20 | 10.1.1.21 |
-| NTNX-4e6eac27-A | 10.1.1.30 | 10.1.1.31 |
+| Nutanix Node    | KVM IP    | CVM IP    | CVM Port |
+| -------------   |----------:| ---------:|---------:|
+| NTNX-4e6eac27-A | 10.1.1.10 | 10.1.1.11 | 9441     |
+| NTNX-d618a06d-A | 10.1.1.20 | 10.1.1.21 | 9442     |
+| NTNX-4e6eac27-A | 10.1.1.30 | 10.1.1.31 | 9443     |
 
-*CVM Cluster IP: 10.1.1.123*
+*CVM Cluster IP: 10.1.1.123:9440*
 
 | Leaf   | Loopback IP | CVM Vlan IP    |
 | -------|------------:| --------------:|
@@ -69,3 +69,25 @@ When all VMs have started the hourglass icon will be replaced with a green play 
 ![VMs Started](./ravello_images/green_arrow.png "VMs Started")
 
 ### Access the Lab
+When the lab is running you can SSH to the "exit" device. 
+
+![IP Address](./ravello_images/ravello_ip.png "IP Address")<br />
+
+Look at the right "Summary" panel for "VM is started" and use the IP in that box to SSH to.
+
+![SSH to the Exit node](./ravello_images/ssh_exit.png "SSH to the Exit node")<br />
+
+SSH to the "exit" node and login with  
+username: `cumulus` 
+password: `CumulusLinux!` 
+
+![SSH](./ravello_images/ssh_exit.png "SSH")<br />
+
+From the exit node you can ssh to either `leaf01` or `leaf02`. 
+If you wish to access the Nutanix console you can also ssh to any Nutanix IP address. The Nutanix nodes use the following credentails
+KVM host username: `root` 
+KVM host password: `nutanix/4u` 
+ 
+CVM host SSH username: `nutanix`
+CVM host SSH password: `nutanix/4u`
+
