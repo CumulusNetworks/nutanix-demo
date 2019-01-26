@@ -117,6 +117,25 @@ UP  bond_swp3  1G     1500  802.3ad  Bond Members: swp3(UP)
 UP  peerlink   2G     1500  802.3ad  Bond Members: swp49(UP), swp50(UP)
 ```
 
+View that MLAG (or Cumulus mLAG) is up and that these three bonds have been assigned `CLAG IDs`
+```Shell
+cumulus@leaf01:~$ net show clag
+The peer is alive
+     Our Priority, ID, and Role: 1000 44:38:39:00:01:49 primary
+    Peer Priority, ID, and Role: 1000 44:38:39:00:02:49 secondary
+          Peer Interface and IP: peerlink.4094 fe80::4638:39ff:fe00:249 (linklocal)
+                      Backup IP:  (inactive)
+                     System MAC: 44:38:39:ff:40:00
+
+CLAG Interfaces
+Our Interface      Peer Interface     CLAG Id   Conflicts              Proto-Down Reason
+----------------   ----------------   -------   --------------------   -----------------
+       bond_swp1   -                  9979      -                      -
+       bond_swp3   -                  60756     -                      -
+       bond_swp2   -                  7773      -                      -
+```
+
+
 Finally, view that only VLAN 1 has been programmed in the spanning-tree bridge 
 ```Shell
 cumulus@leaf01:~$ net show bridge vlan
@@ -129,3 +148,29 @@ bond_swp3     1  PVID, Egress Untagged
 bridge        1
 peerlink      1  PVID, Egress Untagged
 ```
+
+You may repeat the same steps on `leaf02` to verify that the state of the network is the same on both leafs.
+
+### Access Nutanix Prism
+The same IP address we used to SSH to the `exit` node will be used to access the Prism web GUI. 
+
+![IP Address](./ravello_images/ravello_ip.png "IP Address")<br />
+
+Again, from the Ravello canvas, look at the right "Summary" panel for "VM is started" and use the IP in that box.  
+Connect to `https://<IP_ADDRESS>:9440`
+
+You will receive a warning about the connection not being secure or about the SSL certificate.
+
+![SSL Warning](./ravello_images/ssh_warning.png "SSL Warning")<br />
+
+Depending on the browser, click advanced and "Continue" or ignore or whatever is the proper conf
+
+![Prism Login](./ravello_images/nutanix_login.png "Prism Login")<br />
+
+_Note:_ The Prism services may take 10-15 minutes to start *after* the Nutanix VMs are online. Attempting to access the URL before the Prism services are online will result in an error that the page can not be found or `Oops - Server Error` message.
+
+_Note:_ Prism is only accessable via *HTTPS* and will not redirect from HTTP. If you access the Prism IP via HTTP you will receive an `Oops - Server Error` message.
+
+At the login screen you can login with  
+username: `admin`  
+password: `1CumulusLinux!`  
