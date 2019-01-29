@@ -3,20 +3,33 @@
 This will walk you through the process of using Cumulus Hyperconverged Service (HCS) on Ravello. 
 
 * [Cumulus HCS Demo Guide](#cumulus-hcs-demo-guide)
-   * [Topology](#topology)
-      * [IP Addressing](#ip-addressing)
-   * [Cloning the Ravello Blueprint](#cloning-the-ravello-blueprint)
-   * [Starting the lab](#starting-the-lab)
-      * [Verify Nutanix VM Requirements](#verify-nutanix-vm-requirements)
-      * [Start the Lab](#start-the-lab)
-      * [Access the Lab](#access-the-lab)
-      * [Access Nutanix Prism](#access-nutanix-prism)
-      * [Create a VM](#create-a-vm)
-      * [Migrate a VM](#migrate-a-vm)
-      * [Create a Second VM](#create-a-second-vm)
-      * [Powering Off a VM](#powering-off-a-vm)
-      * [Viewing HCS Configuration](#viewing-hcs-configuration)
-   * [More Information](#more-information)
+      * [Getting Access](#getting-access)
+         * [Run It Yourself](#run-it-yourself)
+         * [Access From Cumulus](#access-from-cumulus)
+      * [Topology](#topology)
+         * [IP Addressing](#ip-addressing)
+      * [Starting the lab](#starting-the-lab)
+         * [Verify Nutanix VM Requirements](#verify-nutanix-vm-requirements)
+         * [Start the Lab](#start-the-lab)
+         * [Using the Lab](#using-the-lab)
+         * [Access Nutanix Prism](#access-nutanix-prism)
+         * [Create a VM](#create-a-vm)
+         * [Migrate a VM](#migrate-a-vm)
+         * [Create a Second VM](#create-a-second-vm)
+         * [Powering Off a VM](#powering-off-a-vm)
+         * [Viewing HCS Configuration](#viewing-hcs-configuration)
+      * [More Information](#more-information)
+
+## Getting Access
+There are two options to see the Cumulus HCS in action:
+* Run it yourself
+* Access from Cumulus
+
+### Run It Yourself
+You can run this lab yourself by copying the Cumulus HCS demo Ravello Blueprint. Instructions on how to clone this blueprint will be available soon!
+
+### Access From Cumulus
+If you'd like Cumulus to host this lab for you please contact sales@cumulusnetworks.com for assistance and we will schedule lab time for you.
 
 ## Topology
 
@@ -45,10 +58,6 @@ The topology consists of:
 
 *CVM VRR Gateway IP: 10.1.1.1*
 
-
-## Cloning the Ravello Blueprint
-
-_TODO_
 
 ## Starting the lab
 From the Ravello canvas, you will see the 3 Nutanix nodes, two leafs and exit.
@@ -84,7 +93,7 @@ During this time you will see hourglass icons on all of the VMs while they boot.
 When all VMs have started the hourglass icon will be replaced with a green play button
 ![VMs Started](./ravello_images/green_arrow.png "VMs Started")
 
-### Access the Lab
+### Using the Lab
 When the lab is running you can SSH to the "exit" device. 
 
 ![IP Address](./ravello_images/ravello_ip.png "IP Address")<br />
