@@ -26,7 +26,17 @@ There are two options to see the Cumulus HCS in action:
 * Access from Cumulus
 
 ### Run It Yourself
-You can run this lab yourself by copying the Cumulus HCS demo Ravello Blueprint. Instructions on how to clone this blueprint will be available soon!
+You can run this lab yourself by copying the Cumulus HCS demo Ravello Blueprint.
+First, find the [Cumulus HCS blueprint](https://www.ravellosystems.com/repo/blueprints/3125675365237) on the Ravello Repo page.
+
+![Clone Blueprint](./clone_blueprint.gif "Clone Blueprint")<br />
+
+On the Ravello Repo page, select "Add To Library", and agree to the Ravello Terms and Conditions and click "Add"
+
+![Create Application](./create_application.gif "Create Application")<br />
+On the Ravello Blueprint page, click the "Create Application" button. Provide the application a Name and Click "Create"
+
+With an application, you can follow the [Start the Lab](#start-the-lab) instructions below and walk through the rest of this lab guide.
 
 ### Access From Cumulus
 If you'd like Cumulus to host this lab for you please contact sales@cumulusnetworks.com for assistance and we will schedule lab time for you.
