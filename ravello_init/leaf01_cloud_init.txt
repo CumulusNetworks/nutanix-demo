@@ -85,7 +85,7 @@ iface vlan1
     vlan-raw-device bridge
 EOT
 
-cat << EOT >> /etc/frr/frr.conf
+cat << EOT > /etc/frr/frr.conf
 frr version 4.0+cl3u8
 frr defaults datacenter
 hostname leaf01
@@ -114,5 +114,34 @@ echo "10.0.0.21    exit" >> /etc/hosts
 
 echo "zebra=yes" > /etc/frr/daemons
 echo "bgpd=yes" >> /etc/frr/daemons
+
+cat << EOT > /etc/default/cumulus-hyperconverged
+### /etc/default/cumulus-hyperconverged config file
+# username for Prism (required)
+USERNAME=admin
+# password for Prism (required)
+PASSWORD=1CumulusLinux!
+# CVM address used by the service (required)
+SERVER=10.1.1.123
+# Hook server address (optional)
+#HOOK_SERVER=10.0.0.0
+# Hook port (optional)
+#HOOK_PORT=8888
+# Socket timeout (optional)
+#SOCKET_TIMEOUT=30
+# single/multi rack configuration (optional)
+VXLAN_CONFIG=False
+# configure the vxlan local tunnel ip (optional)
+#VXLAN_LOCAL_IP=10.0.0.0
+# loglevel: verbose/debug (optional)
+#LOGLEVEL=verbose
+# periodic sync timeout (optional)
+#PERIODIC_SYNC_TIMEOUT=60
+# setting specific to Ravello
+IPMI_BYPASS=True
+
+EOT
+
+systemctl enable cumulus-hyperconverged.service
 
 reboot
