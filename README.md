@@ -79,7 +79,7 @@ In order to run Nutanix CE on Ravello, you must enable nested virtualization on 
 To do this, select the Nutanix VM then on the right-hand menu select `General` and then click the link at the bottom of the pane `Advanced Configuration`
 
 ![Advanced Configuration](./ravello_images/advanced_configuration.png "Advanced Configuration")<br />
-Set `cpu-model` to *SandbyBridge* 
+Set `cpu-model` to *SandyBridge* 
 Set `preferPhysicalHost` to *true* _If you do not see this setting, open a case with Ravello support to enable it_ 
 Click `OK` 
 And then click `Save` when back on the right pane. 
