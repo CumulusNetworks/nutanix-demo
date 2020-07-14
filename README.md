@@ -1,4 +1,4 @@
-# Cumulus HCS Demo Guide
+# Nvidia Cumulus HCS Demo Guide
 
 This will walk you through the process of using Cumulus Hyperconverged Service (HCS) on Ravello. 
 
